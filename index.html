@@ -411,6 +411,26 @@
     <div id="approvalsList"></div>
   </div>
 
+  <div id="viewStudents" class="view hidden">
+    <div class="panel-title">
+      <h2 class="serif">Students</h2>
+      <div class="sub">Approved roster</div>
+    </div>
+    <div id="studentsList"></div>
+  </div>
+
+  <div id="viewAccount" class="view hidden">
+    <div class="panel-title"><h2 class="serif">My Account</h2></div>
+    <div class="card" style="max-width:460px;">
+      <h3>Change my password</h3>
+      <div class="field"><label>Current password</label><input type="password" id="curPw"></div>
+      <div class="field"><label>New password</label><input type="password" id="newPw" minlength="6"></div>
+      <div class="field"><label>Confirm new password</label><input type="password" id="newPw2" minlength="6"></div>
+      <button class="btn-brass" onclick="changeMyPassword()">Update password</button>
+      <div id="pwMsg"></div>
+    </div>
+  </div>
+
   <div id="viewGrading" class="view hidden">
     <div class="panel-title"><h2 class="serif">Grade Submissions</h2></div>
     <div id="gradingList"></div>
@@ -572,9 +592,11 @@ function enterApp(){
     <button class="navbtn" onclick="goView('Courses')">Courses</button>
     <button class="navbtn" onclick="goView('Exams')">Exams</button>
     ${isManager ? '<button class="navbtn" onclick="goView(\'Approvals\')">Approvals</button>' : ''}
+    ${isManager ? '<button class="navbtn" onclick="goView(\'Students\')">Students</button>' : ''}
     ${isManager ? '<button class="navbtn" onclick="goView(\'Grading\')">Grade Submissions</button>' : ''}
     ${isManager ? '<button class="navbtn" onclick="goView(\'Appearance\')">Appearance</button>' : ''}
     ${!isManager ? '<button class="navbtn" onclick="goView(\'Grades\')">My Grades</button>' : ''}
+    <button class="navbtn" onclick="goView('Account')">My Account</button>
   `;
   document.getElementById('managerUploadBox').classList.toggle('hidden', !isManager);
   document.getElementById('managerExamBox').classList.toggle('hidden', !isManager);
@@ -591,8 +613,10 @@ function goView(name){
   if (name==='Exams') loadExams();
   if (name==='Grades') loadGrades();
   if (name==='Approvals') loadApprovals();
+  if (name==='Students') loadStudents();
   if (name==='Grading') loadGrading();
   if (name==='Appearance') loadAppearanceForm();
+  if (name==='Account') { /* static form, nothing to load */ }
 }
 
 /* ---------- courses ---------- */
@@ -912,6 +936,61 @@ async function submitGrade(subId, questionIds){
     showMsg('gradeMsg-'+subId, 'Grade saved — student notified by SMS.', true);
     setTimeout(loadGrading, 1000);
   } catch(err){ showMsg('gradeMsg-'+subId, err.message); }
+}
+
+/* ---------- students roster + password reset (manager) ---------- */
+async function loadStudents(){
+  const list = document.getElementById('studentsList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const students = await api('/auth/students');
+    const approved = students.filter(s => s.status === 'approved');
+    if (!approved.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">No students yet</div>Approved students will appear here.</div>'; return; }
+    list.innerHTML = approved.map(s => `
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <h3>${s.name}</h3>
+            <span class="badge level">${s.level || '—'}</span><span class="badge instrument">${s.instrument || '—'}</span>
+            <div class="meta">${s.email} · ${s.phone}</div>
+          </div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input type="password" id="rpw-${s._id}" placeholder="New password for student" style="padding:7px 10px; border:1px solid rgba(25,26,34,0.22); border-radius:4px; min-width:220px;">
+          <label class="small" style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="rsms-${s._id}" checked> Text it to them</label>
+          <button class="btn-outline" onclick="resetStudentPassword('${s._id}')">Reset password</button>
+        </div>
+        <div id="rmsg-${s._id}"></div>
+      </div>
+    `).join('');
+  } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+async function resetStudentPassword(userId){
+  const pw = document.getElementById('rpw-'+userId).value;
+  const sms = document.getElementById('rsms-'+userId).checked;
+  if (!pw || pw.length < 6){ showMsg('rmsg-'+userId, 'Password must be at least 6 characters.'); return; }
+  try {
+    const data = await api('/auth/reset-password/'+userId, { method:'POST', body: JSON.stringify({ newPassword: pw, notifyBySms: sms }) });
+    showMsg('rmsg-'+userId, data.message + (sms ? ' — sent by SMS.' : ''), true);
+    document.getElementById('rpw-'+userId).value = '';
+  } catch(err){ showMsg('rmsg-'+userId, err.message); }
+}
+
+/* ---------- change own password (any user) ---------- */
+async function changeMyPassword(){
+  const cur = document.getElementById('curPw').value;
+  const nw = document.getElementById('newPw').value;
+  const nw2 = document.getElementById('newPw2').value;
+  if (!cur || !nw){ showMsg('pwMsg', 'Fill in all fields.'); return; }
+  if (nw.length < 6){ showMsg('pwMsg', 'New password must be at least 6 characters.'); return; }
+  if (nw !== nw2){ showMsg('pwMsg', 'New passwords do not match.'); return; }
+  try {
+    await api('/auth/change-password', { method:'POST', body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
+    showMsg('pwMsg', 'Password updated successfully.', true);
+    document.getElementById('curPw').value = '';
+    document.getElementById('newPw').value = '';
+    document.getElementById('newPw2').value = '';
+  } catch(err){ showMsg('pwMsg', err.message); }
 }
 
 /* ---------- appearance: theme + logo ---------- */
