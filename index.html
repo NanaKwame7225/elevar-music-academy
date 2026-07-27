@@ -305,15 +305,27 @@
         <!-- REGISTER -->
         <form id="registerForm" class="hidden" onsubmit="return handleRegister(event)">
           <div class="rolepick">
-            <label><input type="radio" name="regRole" value="student" checked><span>I'm a student</span></label>
-            <label><input type="radio" name="regRole" value="manager"><span>I'm a manager</span></label>
+            <label><input type="radio" name="regRole" value="student" checked onchange="toggleRegFields()"><span>I'm a student</span></label>
+            <label><input type="radio" name="regRole" value="manager" onchange="toggleRegFields()"><span>I'm a manager</span></label>
           </div>
           <div class="field"><label>Full name</label><input type="text" id="regName" required></div>
           <div class="field"><label>Email</label><input type="email" id="regEmail" required></div>
           <div class="field"><label>Phone (for SMS updates)</label><input type="tel" id="regPhone" placeholder="0557366229" required></div>
+          <div id="regStudentFields">
+            <div class="field"><label>Instrument you want to study</label>
+              <select id="regInstrument">
+                <option>Piano</option><option>Drums</option><option>Bass Guitar</option><option>Lead Guitar</option><option>Trumpet</option><option>Saxophone</option>
+              </select>
+            </div>
+            <div class="field"><label>Your current level</label>
+              <select id="regLevel">
+                <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+              </select>
+            </div>
+          </div>
           <div class="field"><label>Password</label><input type="password" id="regPassword" required minlength="6"></div>
           <button class="btn-primary" type="submit">Request account</button>
-          <div class="small" style="margin-top:8px;">New accounts are reviewed by an academy manager before access is granted. You'll get an SMS once approved.</div>
+          <div class="small" style="margin-top:8px;">New accounts are reviewed by an academy manager before access is granted. The manager confirms your level and instrument when approving. You'll get an SMS once approved.</div>
           <div id="registerMsg"></div>
         </form>
       </div>
@@ -349,9 +361,7 @@
             </div>
             <div class="field"><label>Instrument</label>
               <select id="courseInstrument" required>
-                <option>Piano</option><option>Guitar</option><option>Violin</option>
-                <option>Voice</option><option>Drums</option><option>Saxophone</option>
-                <option>Flute</option><option>Music Theory</option><option>Other</option>
+                <option>Piano</option><option>Drums</option><option>Bass Guitar</option><option>Lead Guitar</option><option>Trumpet</option><option>Saxophone</option>
               </select>
             </div>
           </div>
@@ -382,8 +392,7 @@
           </div>
           <div class="field"><label>Instrument</label>
             <select id="examInstrument" required>
-              <option>Piano</option><option>Guitar</option><option>Violin</option><option>Voice</option>
-              <option>Drums</option><option>Saxophone</option><option>Flute</option><option>Music Theory</option><option>Other</option>
+              <option>Piano</option><option>Drums</option><option>Bass Guitar</option><option>Lead Guitar</option><option>Trumpet</option><option>Saxophone</option>
             </select>
           </div>
         </div>
@@ -487,7 +496,7 @@
 
 </div>
 
-<footer class="foot">Elevar Music Academy — internal platform</footer>
+<footer class="foot">Elevar Music Academy — Playing with Confidence, Passion and Respect</footer>
 
 <script>
 /* ============ CONFIG ============
@@ -545,20 +554,30 @@ async function handleRegister(e){
   e.preventDefault();
   try {
     const role = document.querySelector('input[name=regRole]:checked').value;
+    const payload = {
+      name: document.getElementById('regName').value,
+      email: document.getElementById('regEmail').value,
+      phone: document.getElementById('regPhone').value,
+      password: document.getElementById('regPassword').value,
+      role
+    };
+    if (role === 'student'){
+      payload.instrument = document.getElementById('regInstrument').value;
+      payload.level = document.getElementById('regLevel').value;
+    }
     const data = await api('/auth/register', {
       method:'POST',
-      body: JSON.stringify({
-        name: document.getElementById('regName').value,
-        email: document.getElementById('regEmail').value,
-        phone: document.getElementById('regPhone').value,
-        password: document.getElementById('regPassword').value,
-        role
-      })
+      body: JSON.stringify(payload)
     });
     showMsg('registerMsg', data.message, true);
     document.getElementById('registerForm').reset();
+    toggleRegFields();
   } catch(err){ showMsg('registerMsg', err.message); }
   return false;
+}
+function toggleRegFields(){
+  const role = document.querySelector('input[name=regRole]:checked').value;
+  document.getElementById('regStudentFields').style.display = (role === 'student') ? 'block' : 'none';
 }
 function logout(){
   authToken = null; currentUser = null;
@@ -855,19 +874,17 @@ async function loadApprovals(){
           <div>
             <h3>${u.name} <span class="small">(${u.role})</span></h3>
             <div class="meta">${u.email} · ${u.phone}</div>
+            ${u.role === 'student' && (u.instrument || u.level) ? `<div class="meta">Requested: ${u.instrument || '—'} · ${u.level || '—'}</div>` : ''}
           </div>
           <button class="btn-danger" onclick="rejectUser('${u._id}')">Reject</button>
         </div>
         ${u.role === 'student' ? `
           <div class="row2" style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; margin-top:12px; align-items:end;">
             <div class="field" style="margin:0;"><label>Level</label>
-              <select id="lvl-${u._id}"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+              <select id="lvl-${u._id}">${['Beginner','Intermediate','Advanced'].map(l=>`<option ${l===u.level?'selected':''}>${l}</option>`).join('')}</select>
             </div>
             <div class="field" style="margin:0;"><label>Instrument</label>
-              <select id="inst-${u._id}">
-                <option>Piano</option><option>Guitar</option><option>Violin</option><option>Voice</option>
-                <option>Drums</option><option>Saxophone</option><option>Flute</option><option>Music Theory</option><option>Other</option>
-              </select>
+              <select id="inst-${u._id}">${['Piano','Drums','Bass Guitar','Lead Guitar','Trumpet','Saxophone'].map(i=>`<option ${i===u.instrument?'selected':''}>${i}</option>`).join('')}</select>
             </div>
             <button class="btn-brass" onclick="approveUser('${u._id}')">Approve</button>
           </div>
@@ -938,42 +955,117 @@ async function submitGrade(subId, questionIds){
   } catch(err){ showMsg('gradeMsg-'+subId, err.message); }
 }
 
-/* ---------- students roster + password reset (manager) ---------- */
+/* ---------- students roster: grouped by instrument > level, edit + delete ---------- */
+const ELEVAR_INSTRUMENTS = ['Piano','Drums','Bass Guitar','Lead Guitar','Trumpet','Saxophone'];
+const ELEVAR_LEVELS = ['Beginner','Intermediate','Advanced'];
+
 async function loadStudents(){
   const list = document.getElementById('studentsList');
   list.innerHTML = '<div class="empty">Loading…</div>';
   try {
     const students = await api('/auth/students');
     const approved = students.filter(s => s.status === 'approved');
-    if (!approved.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">No students yet</div>Approved students will appear here.</div>'; return; }
-    list.innerHTML = approved.map(s => `
-      <div class="card">
-        <div class="card-row">
-          <div>
-            <h3>${s.name}</h3>
-            <span class="badge level">${s.level || '—'}</span><span class="badge instrument">${s.instrument || '—'}</span>
-            <div class="meta">${s.email} · ${s.phone}</div>
-          </div>
-        </div>
-        <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <input type="password" id="rpw-${s._id}" placeholder="New password for student" style="padding:7px 10px; border:1px solid rgba(25,26,34,0.22); border-radius:4px; min-width:220px;">
-          <label class="small" style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="rsms-${s._id}" checked> Text it to them</label>
-          <button class="btn-outline" onclick="resetStudentPassword('${s._id}')">Reset password</button>
-        </div>
-        <div id="rmsg-${s._id}"></div>
-      </div>
-    `).join('');
+    if (!approved.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">No students yet</div>Approved students will appear here, grouped by instrument and level.</div>'; return; }
+
+    // group: instrument -> level -> [students]
+    const groups = {};
+    approved.forEach(s => {
+      const inst = s.instrument || 'Unassigned';
+      const lvl = s.level || 'Unassigned';
+      groups[inst] = groups[inst] || {};
+      groups[inst][lvl] = groups[inst][lvl] || [];
+      groups[inst][lvl].push(s);
+    });
+
+    // order instruments by the academy list first, then any extras
+    const instOrder = [...ELEVAR_INSTRUMENTS.filter(i => groups[i]), ...Object.keys(groups).filter(i => !ELEVAR_INSTRUMENTS.includes(i))];
+
+    let html = '';
+    instOrder.forEach(inst => {
+      const total = Object.values(groups[inst]).reduce((n,arr)=>n+arr.length,0);
+      html += `<div style="margin-bottom:26px;">
+        <div style="display:flex; align-items:baseline; gap:10px; border-bottom:2px solid var(--accent); padding-bottom:6px; margin-bottom:12px;">
+          <h3 class="serif" style="margin:0; font-size:1.3rem; color:var(--curtain);">${inst}</h3>
+          <span class="small">${total} student${total!==1?'s':''}</span>
+        </div>`;
+
+      const lvlOrder = [...ELEVAR_LEVELS.filter(l => groups[inst][l]), ...Object.keys(groups[inst]).filter(l => !ELEVAR_LEVELS.includes(l))];
+      lvlOrder.forEach(lvl => {
+        html += `<div style="margin-bottom:10px;">
+          <div class="small" style="text-transform:uppercase; letter-spacing:1.5px; font-family:var(--mono); margin-bottom:6px;">${lvl}</div>`;
+        groups[inst][lvl].forEach(s => {
+          html += `
+          <div class="card" id="student-${s._id}">
+            <div class="card-row">
+              <div>
+                <h3 style="font-size:1rem;">${s.name}</h3>
+                <div class="meta">${s.email} · ${s.phone}</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-outline" onclick="toggleStudentEdit('${s._id}')">Edit</button>
+                <button class="btn-danger" onclick="deleteStudent('${s._id}','${s.name.replace(/'/g,"\\'")}')">Delete</button>
+              </div>
+            </div>
+            <div id="edit-${s._id}" class="hidden" style="margin-top:12px; border-top:1px solid rgba(25,26,34,0.1); padding-top:12px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="field"><label>Name</label><input type="text" id="ename-${s._id}" value="${s.name}"></div>
+                <div class="field"><label>Phone</label><input type="text" id="ephone-${s._id}" value="${s.phone}"></div>
+                <div class="field"><label>Level</label><select id="elevel-${s._id}">${ELEVAR_LEVELS.map(l=>`<option ${l===s.level?'selected':''}>${l}</option>`).join('')}</select></div>
+                <div class="field"><label>Instrument</label><select id="einst-${s._id}">${ELEVAR_INSTRUMENTS.map(i=>`<option ${i===s.instrument?'selected':''}>${i}</option>`).join('')}</select></div>
+              </div>
+              <div style="display:flex; gap:8px; margin-top:6px;">
+                <button class="btn-brass" onclick="saveStudentEdit('${s._id}')">Save changes</button>
+                <button class="btn-outline" onclick="toggleStudentEdit('${s._id}')">Cancel</button>
+              </div>
+              <div style="margin-top:12px; border-top:1px dashed rgba(25,26,34,0.15); padding-top:10px;">
+                <div class="small" style="margin-bottom:4px;">Reset this student's password:</div>
+                <input type="password" id="rpw-${s._id}" placeholder="New password" style="padding:7px 10px; border:1px solid rgba(25,26,34,0.22); border-radius:4px; min-width:180px;">
+                <label class="small" style="display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" id="rsms-${s._id}" checked> Text it</label>
+                <button class="btn-outline" onclick="resetStudentPassword('${s._id}')">Reset</button>
+              </div>
+              <div id="emsg-${s._id}"></div>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+      });
+      html += `</div>`;
+    });
+    list.innerHTML = html;
   } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+function toggleStudentEdit(id){
+  document.getElementById('edit-'+id).classList.toggle('hidden');
+}
+async function saveStudentEdit(id){
+  const body = {
+    name: document.getElementById('ename-'+id).value,
+    phone: document.getElementById('ephone-'+id).value,
+    level: document.getElementById('elevel-'+id).value,
+    instrument: document.getElementById('einst-'+id).value
+  };
+  try {
+    await api('/auth/student/'+id, { method:'PUT', body: JSON.stringify(body) });
+    showMsg('emsg-'+id, 'Saved.', true);
+    loadStudents();
+  } catch(err){ showMsg('emsg-'+id, err.message); }
+}
+async function deleteStudent(id, name){
+  if (!confirm(`Delete ${name}? This removes their account and exam submissions permanently.`)) return;
+  try {
+    await api('/auth/student/'+id, { method:'DELETE' });
+    loadStudents();
+  } catch(err){ alert(err.message); }
 }
 async function resetStudentPassword(userId){
   const pw = document.getElementById('rpw-'+userId).value;
   const sms = document.getElementById('rsms-'+userId).checked;
-  if (!pw || pw.length < 6){ showMsg('rmsg-'+userId, 'Password must be at least 6 characters.'); return; }
+  if (!pw || pw.length < 6){ showMsg('emsg-'+userId, 'Password must be at least 6 characters.'); return; }
   try {
     const data = await api('/auth/reset-password/'+userId, { method:'POST', body: JSON.stringify({ newPassword: pw, notifyBySms: sms }) });
-    showMsg('rmsg-'+userId, data.message + (sms ? ' — sent by SMS.' : ''), true);
+    showMsg('emsg-'+userId, data.message + (sms ? ' — sent by SMS.' : ''), true);
     document.getElementById('rpw-'+userId).value = '';
-  } catch(err){ showMsg('rmsg-'+userId, err.message); }
+  } catch(err){ showMsg('emsg-'+userId, err.message); }
 }
 
 /* ---------- change own password (any user) ---------- */
