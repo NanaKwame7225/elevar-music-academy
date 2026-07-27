@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elevar Music Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN TOKENS ============
+     Curtain  : deep oxblood, main dark ground (concert-hall velvet)
+     Ivory    : warm piano-key light (cards, panels)
+     Brass    : instrument-fitting gold (primary accent / CTAs)
+     Patina   : aged teal-green (secondary accent / badges)
+     Ink      : near-black warm text on ivory
+     -- Swap these six values when the real Elevar logo/colours arrive. --
+  */
+  :root{
+    --curtain: #3B0F14;
+    --curtain-deep: #220A0D;
+    --ivory: #F2ECDC;
+    --ivory-dim: #E7DFC9;
+    --brass: #C9A24B;
+    --brass-bright: #E4C06E;
+    --patina: #33534C;
+    --ink: #211A15;
+    --ink-soft: #58483C;
+    --danger: #8C2F26;
+    --radius: 3px;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: var(--sans);
+    background: var(--ivory);
+    color: var(--ink);
+    line-height:1.5;
+  }
+  h1,h2,h3,.serif{ font-family: var(--serif); font-weight:600; }
+  a{ color: inherit; }
+  button{ font-family: var(--sans); cursor:pointer; }
+  ::selection{ background: var(--brass); color: var(--curtain-deep); }
+  :focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  /* ---------- Staff-line signature motif ---------- */
+  .staff{
+    position:relative;
+    height: 74px;
+    margin: 0 auto;
+  }
+  .staff .line{
+    position:absolute; left:0; right:0; height:1px;
+    background: rgba(242,236,220,0.28);
+  }
+  .staff .line:nth-child(1){ top:0; }
+  .staff .line:nth-child(2){ top:18px; }
+  .staff .line:nth-child(3){ top:36px; }
+  .staff .line:nth-child(4){ top:54px; }
+  .staff .line:nth-child(5){ top:72px; }
+  .staff .note{
+    position:absolute; width:13px; height:10px; border-radius:50%;
+    background: var(--brass-bright);
+    transform: rotate(-18deg);
+    animation: drift 5.5s ease-in-out infinite;
+    box-shadow: 0 0 14px rgba(228,192,110,0.5);
+  }
+  @keyframes drift{
+    0%   { left:-2%;  top:54px; }
+    25%  { left:23%;  top:0px; }
+    50%  { left:50%;  top:36px; }
+    75%  { left:76%;  top:18px; }
+    100% { left:100%; top:54px; }
+  }
+  @media (prefers-reduced-motion: reduce){ .staff .note{ animation:none; left:50%; top:36px; } }
+
+  .staff-divider{ height:1px; background: rgba(33,26,21,0.12); position:relative; margin: 2.2rem 0; }
+  .staff-divider::before{
+    content:"–  –  –  –  –";
+    position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:var(--ivory); padding:0 12px;
+    color: var(--ink-soft); letter-spacing:4px; font-size:11px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    background: linear-gradient(180deg, var(--curtain) 0%, var(--curtain-deep) 100%);
+    color: var(--ivory);
+    padding: 0 20px;
+  }
+  .top-inner{ max-width:1120px; margin:0 auto; }
+  .brandrow{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 0 6px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:38px; height:38px; border:1.5px solid var(--brass);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-style:italic; color:var(--brass-bright); font-size:19px;
+  }
+  .brand-name{ font-size:1.28rem; letter-spacing:0.3px; }
+  .brand-tag{ font-family:var(--mono); font-size:10.5px; letter-spacing:2.5px; text-transform:uppercase; color:var(--brass-bright); opacity:0.85; }
+  #userbox{ display:flex; align-items:center; gap:14px; font-size:14px; }
+  #userbox .who{ text-align:right; }
+  #userbox .who .name{ font-weight:600; }
+  #userbox .who .role{ font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--brass-bright); }
+  .btn-ghost-light{
+    background:transparent; border:1px solid rgba(242,236,220,0.4); color:var(--ivory);
+    padding:7px 14px; border-radius:var(--radius); font-size:13px;
+  }
+  .btn-ghost-light:hover{ border-color: var(--brass); }
+
+  /* ---------- Layout shells ---------- */
+  .wrap{ max-width:1120px; margin:0 auto; padding: 0 20px 60px; }
+  .hidden{ display:none !important; }
+
+  /* ---------- Hero / Auth (logged out) ---------- */
+  #authScreen .hero{
+    background: linear-gradient(180deg, var(--curtain-deep) 0%, var(--curtain) 60%, var(--curtain) 100%);
+    color: var(--ivory);
+    padding: 46px 20px 0;
+  }
+  .hero-inner{ max-width:1120px; margin:0 auto; display:grid; grid-template-columns: 1.15fr 0.85fr; gap:40px; align-items:center; padding-bottom: 30px;}
+  @media (max-width: 860px){ .hero-inner{ grid-template-columns:1fr; } }
+  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--brass-bright); margin-bottom:14px; }
+  .hero h1{ font-size: clamp(2.1rem, 4.2vw, 3.1rem); line-height:1.05; margin:0 0 18px; font-weight:600; }
+  .hero h1 em{ color: var(--brass-bright); font-style:italic; }
+  .hero p{ max-width:46ch; color: rgba(242,236,220,0.8); font-size:15.5px; }
+
+  .authcard{
+    background: var(--ivory); color:var(--ink);
+    border-radius: var(--radius); padding: 30px 28px 26px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+  }
+  .tabbar{ display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid rgba(33,26,21,0.14); }
+  .tabbtn{
+    flex:1; background:none; border:none; padding:10px 0; font-size:13.5px; font-weight:600;
+    color: var(--ink-soft); border-bottom:2px solid transparent; letter-spacing:0.2px;
+  }
+  .tabbtn.active{ color: var(--curtain); border-bottom-color: var(--brass); }
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:12px; font-weight:600; margin-bottom:5px; color:var(--ink-soft); }
+  .field input, .field select, .field textarea{
+    width:100%; padding:9px 11px; border:1px solid rgba(33,26,21,0.22);
+    border-radius: var(--radius); font-family:var(--sans); font-size:14px; background:#fff;
+    color: var(--ink);
+  }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .rolepick{ display:flex; gap:8px; margin-bottom:16px; }
+  .rolepick label{
+    flex:1; text-align:center; border:1px solid rgba(33,26,21,0.22); border-radius:var(--radius);
+    padding:9px 0; font-size:13px; font-weight:600; cursor:pointer; color: var(--ink-soft);
+  }
+  .rolepick input{ display:none; }
+  .rolepick input:checked + span{ color: var(--curtain); }
+  .rolepick label:has(input:checked){ border-color: var(--brass); background: rgba(201,162,75,0.1); }
+
+  .btn-primary{
+    width:100%; background: var(--curtain); color: var(--ivory); border:none;
+    padding:11px 0; border-radius:var(--radius); font-weight:600; font-size:14px; letter-spacing:0.2px;
+  }
+  .btn-primary:hover{ background: var(--curtain-deep); }
+  .btn-brass{
+    background: var(--brass); color: var(--curtain-deep); border:none;
+    padding:9px 16px; border-radius:var(--radius); font-weight:700; font-size:13px;
+  }
+  .btn-brass:hover{ background: var(--brass-bright); }
+  .btn-outline{
+    background:transparent; border:1px solid rgba(33,26,21,0.25); color:var(--ink);
+    padding:8px 14px; border-radius:var(--radius); font-size:13px; font-weight:600;
+  }
+  .btn-outline:hover{ border-color: var(--curtain); }
+  .btn-danger{ background: transparent; border:1px solid var(--danger); color: var(--danger); padding:6px 12px; border-radius:var(--radius); font-size:12.5px; font-weight:600; }
+  .msg{ font-size:13px; margin-top:10px; padding:9px 11px; border-radius:var(--radius); }
+  .msg.err{ background: rgba(140,47,38,0.1); color: var(--danger); border:1px solid rgba(140,47,38,0.25); }
+  .msg.ok{ background: rgba(51,83,76,0.1); color: var(--patina); border:1px solid rgba(51,83,76,0.3); }
+
+  /* ---------- App shell (logged in) ---------- */
+  #appScreen{ padding-top: 26px; }
+  .navrow{ display:flex; gap:6px; margin-bottom:26px; flex-wrap:wrap; }
+  .navbtn{
+    background:none; border:1px solid rgba(33,26,21,0.18); color:var(--ink-soft);
+    padding:9px 16px; border-radius: 20px; font-size:13px; font-weight:600;
+  }
+  .navbtn.active{ background: var(--curtain); color: var(--ivory); border-color:var(--curtain); }
+
+  .panel-title{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+  .panel-title h2{ margin:0; font-size:1.5rem; }
+  .panel-title .sub{ font-family:var(--mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color: var(--ink-soft); }
+
+  .card{
+    background:#fff; border:1px solid rgba(33,26,21,0.1); border-radius:var(--radius);
+    padding: 18px 20px; margin-bottom:14px;
+  }
+  .card-row{ display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+  .card h3{ margin: 0 0 4px; font-size:1.05rem; }
+  .badge{
+    display:inline-block; font-family:var(--mono); font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+    padding:3px 8px; border-radius:20px; margin-right:6px;
+  }
+  .badge.level{ background: rgba(201,162,75,0.18); color:#8a6c22; }
+  .badge.instrument{ background: rgba(51,83,76,0.14); color: var(--patina); }
+  .badge.status-pending{ background: rgba(140,47,38,0.12); color: var(--danger); }
+  .badge.status-graded{ background: rgba(51,83,76,0.14); color: var(--patina); }
+  .meta{ font-size:12.5px; color: var(--ink-soft); margin-top:4px; }
+  .empty{ text-align:center; padding: 40px 20px; color: var(--ink-soft); }
+  .empty .eyebrow{ color: var(--ink-soft); }
+
+  .qbuilder-item{ border:1px dashed rgba(33,26,21,0.25); border-radius:var(--radius); padding:14px; margin-bottom:10px; background: rgba(242,236,220,0.4); }
+  .qbuilder-item .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .opt-row{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .opt-row input[type=text]{ flex:1; }
+  .small{ font-size:12px; color:var(--ink-soft); }
+  .grade-num{ font-family:var(--mono); font-weight:600; }
+
+  .score-big{ font-family:var(--serif); font-size:2.1rem; color: var(--curtain); }
+  .score-big.pending{ color: var(--danger); font-size:1rem; font-family:var(--mono); }
+
+  footer.foot{
+    text-align:center; padding: 30px 20px 50px; color: var(--ink-soft); font-size:12.5px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brandrow">
+      <div class="brand">
+        <div class="brand-mark">E</div>
+        <div>
+          <div class="brand-name serif">Elevar Music Academy</div>
+          <div class="brand-tag">Practice · Perform · Progress</div>
+        </div>
+      </div>
+      <div id="userbox" class="hidden">
+        <div class="who">
+          <div class="name" id="userName"></div>
+          <div class="role" id="userRole"></div>
+        </div>
+        <button class="btn-ghost-light" onclick="logout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ LOGGED-OUT: HERO + AUTH ============ -->
+<div id="authScreen">
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Student &amp; Manager Portal</div>
+        <h1>Where every <em>lesson</em><br>finds its <em>student</em>.</h1>
+        <p>Course material sorted by level and instrument, exams you can sit online, and grades the moment they're ready — with an SMS the moment something changes.</p>
+        <div class="staff" style="margin-top:34px; max-width:420px;">
+          <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+          <div class="note"></div>
+        </div>
+      </div>
+
+      <div class="authcard">
+        <div class="tabbar">
+          <button class="tabbtn active" id="tabLoginBtn" onclick="switchTab('login')">Log in</button>
+          <button class="tabbtn" id="tabRegisterBtn" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+          <div class="field"><label>Email</label><input type="email" id="loginEmail" required></div>
+          <div class="field"><label>Password</label><input type="password" id="loginPassword" required></div>
+          <button class="btn-primary" type="submit">Enter the academy</button>
+          <div id="loginMsg"></div>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="hidden" onsubmit="return handleRegister(event)">
+          <div class="rolepick">
+            <label><input type="radio" name="regRole" value="student" checked><span>I'm a student</span></label>
+            <label><input type="radio" name="regRole" value="manager"><span>I'm a manager</span></label>
+          </div>
+          <div class="field"><label>Full name</label><input type="text" id="regName" required></div>
+          <div class="field"><label>Email</label><input type="email" id="regEmail" required></div>
+          <div class="field"><label>Phone (for SMS updates)</label><input type="tel" id="regPhone" placeholder="0557366229" required></div>
+          <div class="field"><label>Password</label><input type="password" id="regPassword" required minlength="6"></div>
+          <button class="btn-primary" type="submit">Request account</button>
+          <div class="small" style="margin-top:8px;">New accounts are reviewed by an academy manager before access is granted. You'll get an SMS once approved.</div>
+          <div id="registerMsg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOGGED-IN APP SHELL ============ -->
+<div id="appScreen" class="wrap hidden">
+
+  <div class="navrow" id="navRow"><!-- filled by JS based on role --></div>
+
+  <div id="viewCourses" class="view">
+    <div class="panel-title">
+      <h2 class="serif">Course Library</h2>
+      <div class="sub" id="coursesSub"></div>
+    </div>
+    <div id="managerUploadBox" class="card hidden">
+      <h3>Upload new material</h3>
+      <form onsubmit="return uploadCourse(event)">
+        <div class="qbuilder-item" style="background:none; border:none; padding:0;">
+          <div class="row2">
+            <div class="field"><label>Title</label><input type="text" id="courseTitle" required></div>
+            <div class="field"><label>File</label><input type="file" id="courseFile" required></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Level</label>
+              <select id="courseLevel" required>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="field"><label>Instrument</label>
+              <select id="courseInstrument" required>
+                <option>Piano</option><option>Guitar</option><option>Violin</option>
+                <option>Voice</option><option>Drums</option><option>Saxophone</option>
+                <option>Flute</option><option>Music Theory</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Description</label><textarea id="courseDesc"></textarea></div>
+        </div>
+        <button class="btn-brass" type="submit">Upload material</button>
+        <div id="courseUploadMsg"></div>
+      </form>
+    </div>
+    <div id="coursesList"></div>
+  </div>
+
+  <div id="viewExams" class="view hidden">
+    <div class="panel-title">
+      <h2 class="serif">Exams</h2>
+      <div class="sub" id="examsSub"></div>
+    </div>
+    <div id="managerExamBox" class="card hidden">
+      <h3>Set a new exam</h3>
+      <form onsubmit="return createExam(event)">
+        <div class="row2" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="field"><label>Title</label><input type="text" id="examTitle" required></div>
+          <div class="field"><label>Duration (minutes)</label><input type="number" id="examDuration" value="60" required></div>
+        </div>
+        <div class="row2" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="field"><label>Level</label>
+            <select id="examLevel" required><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+          </div>
+          <div class="field"><label>Instrument</label>
+            <select id="examInstrument" required>
+              <option>Piano</option><option>Guitar</option><option>Violin</option><option>Voice</option>
+              <option>Drums</option><option>Saxophone</option><option>Flute</option><option>Music Theory</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Description</label><textarea id="examDesc"></textarea></div>
+
+        <div id="questionList"></div>
+        <div style="display:flex; gap:8px; margin:12px 0;">
+          <button type="button" class="btn-outline" onclick="addQuestion('mcq')">+ Multiple choice question</button>
+          <button type="button" class="btn-outline" onclick="addQuestion('file')">+ File-upload question</button>
+        </div>
+        <button class="btn-brass" type="submit">Publish exam</button>
+        <div id="examCreateMsg"></div>
+      </form>
+    </div>
+    <div id="examsList"></div>
+  </div>
+
+  <div id="viewGrades" class="view hidden">
+    <div class="panel-title"><h2 class="serif">My Grades</h2></div>
+    <div id="gradesList"></div>
+  </div>
+
+  <div id="viewApprovals" class="view hidden">
+    <div class="panel-title"><h2 class="serif">Pending Approvals</h2></div>
+    <div id="approvalsList"></div>
+  </div>
+
+  <div id="viewGrading" class="view hidden">
+    <div class="panel-title"><h2 class="serif">Grade Submissions</h2></div>
+    <div id="gradingList"></div>
+  </div>
+
+</div>
+
+<footer class="foot">Elevar Music Academy — internal platform</footer>
+
+<script>
+/* ============ CONFIG ============
+   Set this to your deployed Railway backend URL once live, e.g.:
+   const API_BASE = 'https://elevar-backend-production.up.railway.app/api';
+*/
+const API_BASE = 'https://elevar-backend-production.up.railway.app/api';
+
+let authToken = null;
+let currentUser = null;
+let examQuestions = []; // builder state for the exam-creation form
+
+/* ---------- helpers ---------- */
+async function api(path, options = {}) {
+  const headers = options.headers || {};
+  if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+  if (options.body && !(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+function showMsg(elId, text, ok=false){
+  const el = document.getElementById(elId);
+  el.innerHTML = `<div class="msg ${ok ? 'ok' : 'err'}">${text}</div>`;
+}
+function switchTab(tab){
+  document.getElementById('tabLoginBtn').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegisterBtn').classList.toggle('active', tab==='register');
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+}
+
+/* ---------- auth ---------- */
+async function handleLogin(e){
+  e.preventDefault();
+  try {
+    const data = await api('/auth/login', {
+      method:'POST',
+      body: JSON.stringify({
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value
+      })
+    });
+    authToken = data.token;
+    currentUser = data.user;
+    localStorage.setItem('elevar_token', authToken);
+    enterApp();
+  } catch(err){ showMsg('loginMsg', err.message); }
+  return false;
+}
+async function handleRegister(e){
+  e.preventDefault();
+  try {
+    const role = document.querySelector('input[name=regRole]:checked').value;
+    const data = await api('/auth/register', {
+      method:'POST',
+      body: JSON.stringify({
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        phone: document.getElementById('regPhone').value,
+        password: document.getElementById('regPassword').value,
+        role
+      })
+    });
+    showMsg('registerMsg', data.message, true);
+    document.getElementById('registerForm').reset();
+  } catch(err){ showMsg('registerMsg', err.message); }
+  return false;
+}
+function logout(){
+  authToken = null; currentUser = null;
+  localStorage.removeItem('elevar_token');
+  document.getElementById('appScreen').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+  document.getElementById('userbox').classList.add('hidden');
+}
+async function tryResumeSession(){
+  const saved = localStorage.getItem('elevar_token');
+  if (!saved) return;
+  authToken = saved;
+  try {
+    const me = await api('/auth/me');
+    currentUser = me;
+    enterApp();
+  } catch(_) { authToken = null; localStorage.removeItem('elevar_token'); }
+}
+
+/* ---------- app shell / nav ---------- */
+function enterApp(){
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  document.getElementById('userbox').classList.remove('hidden');
+  document.getElementById('userName').textContent = currentUser.name;
+  document.getElementById('userRole').textContent = currentUser.role;
+
+  const nav = document.getElementById('navRow');
+  const isManager = currentUser.role === 'manager';
+  nav.innerHTML = `
+    <button class="navbtn" onclick="goView('Courses')">Courses</button>
+    <button class="navbtn" onclick="goView('Exams')">Exams</button>
+    ${isManager ? '<button class="navbtn" onclick="goView(\'Approvals\')">Approvals</button>' : ''}
+    ${isManager ? '<button class="navbtn" onclick="goView(\'Grading\')">Grade Submissions</button>' : ''}
+    ${!isManager ? '<button class="navbtn" onclick="goView(\'Grades\')">My Grades</button>' : ''}
+  `;
+  document.getElementById('managerUploadBox').classList.toggle('hidden', !isManager);
+  document.getElementById('managerExamBox').classList.toggle('hidden', !isManager);
+  document.getElementById('coursesSub').textContent = isManager ? 'All levels & instruments' : `${currentUser.level || '—'} · ${currentUser.instrument || '—'}`;
+  document.getElementById('examsSub').textContent = isManager ? 'All levels & instruments' : `${currentUser.level || '—'} · ${currentUser.instrument || '—'}`;
+
+  goView('Courses');
+}
+function goView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view'+name).classList.remove('hidden');
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('active', b.textContent.replace('My ','').includes(name) || (name==='Grading' && b.textContent.includes('Grade Submissions'))));
+  if (name==='Courses') loadCourses();
+  if (name==='Exams') loadExams();
+  if (name==='Grades') loadGrades();
+  if (name==='Approvals') loadApprovals();
+  if (name==='Grading') loadGrading();
+}
+
+/* ---------- courses ---------- */
+async function loadCourses(){
+  const list = document.getElementById('coursesList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const courses = await api('/courses');
+    if (!courses.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">Nothing here yet</div>No course material has been uploaded for this level & instrument.</div>'; return; }
+    list.innerHTML = courses.map(c => `
+      <div class="card card-row">
+        <div>
+          <h3>${c.title}</h3>
+          <span class="badge level">${c.level}</span><span class="badge instrument">${c.instrument}</span>
+          <div class="meta">${c.description || ''}</div>
+          <div class="meta">${c.fileName} · ${(c.fileSize/1024).toFixed(0)} KB</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-brass" onclick="downloadCourse('${c._id}')">Download</button>
+          ${currentUser.role==='manager' ? `<button class="btn-danger" onclick="deleteCourse('${c._id}')">Delete</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+async function downloadCourse(id){
+  const res = await fetch(API_BASE + '/courses/' + id + '/download', { headers: { 'Authorization': 'Bearer ' + authToken } });
+  if (!res.ok){ alert('Could not download file'); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="(.+)"/);
+  a.href = url; a.download = match ? match[1] : 'download';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function deleteCourse(id){
+  if (!confirm('Delete this course material?')) return;
+  await api('/courses/' + id, { method:'DELETE' });
+  loadCourses();
+}
+async function uploadCourse(e){
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('title', document.getElementById('courseTitle').value);
+  fd.append('description', document.getElementById('courseDesc').value);
+  fd.append('level', document.getElementById('courseLevel').value);
+  fd.append('instrument', document.getElementById('courseInstrument').value);
+  fd.append('file', document.getElementById('courseFile').files[0]);
+  try {
+    await api('/courses', { method:'POST', body: fd });
+    showMsg('courseUploadMsg', 'Uploaded — students in this level/instrument have been notified.', true);
+    e.target.reset();
+    loadCourses();
+  } catch(err){ showMsg('courseUploadMsg', err.message); }
+  return false;
+}
+
+/* ---------- exam builder (manager) ---------- */
+function addQuestion(type){
+  examQuestions.push(type === 'mcq'
+    ? { type:'mcq', question:'', points:1, options:['',''], correctIndex:0 }
+    : { type:'file', question:'', points:1, instructions:'' });
+  renderQuestionBuilder();
+}
+function renderQuestionBuilder(){
+  const box = document.getElementById('questionList');
+  box.innerHTML = examQuestions.map((q, i) => {
+    if (q.type === 'mcq'){
+      return `
+      <div class="qbuilder-item">
+        <div class="small">Question ${i+1} · Multiple choice <button type="button" class="btn-danger" style="float:right" onclick="removeQuestion(${i})">Remove</button></div>
+        <div class="field"><input type="text" placeholder="Question text" value="${q.question}" oninput="examQuestions[${i}].question=this.value"></div>
+        ${q.options.map((opt, oi) => `
+          <div class="opt-row">
+            <input type="radio" name="correct${i}" ${q.correctIndex===oi?'checked':''} onclick="examQuestions[${i}].correctIndex=${oi}">
+            <input type="text" placeholder="Option ${oi+1}" value="${opt}" oninput="examQuestions[${i}].options[${oi}]=this.value">
+          </div>`).join('')}
+        <button type="button" class="btn-outline" style="margin-top:6px;" onclick="examQuestions[${i}].options.push(''); renderQuestionBuilder()">+ Option</button>
+        <div class="field" style="margin-top:8px; max-width:120px;"><label>Points</label><input type="number" value="${q.points}" oninput="examQuestions[${i}].points=Number(this.value)"></div>
+      </div>`;
+    } else {
+      return `
+      <div class="qbuilder-item">
+        <div class="small">Question ${i+1} · File upload (manually graded) <button type="button" class="btn-danger" style="float:right" onclick="removeQuestion(${i})">Remove</button></div>
+        <div class="field"><input type="text" placeholder="Question text (e.g. 'Record yourself playing the assigned piece')" value="${q.question}" oninput="examQuestions[${i}].question=this.value"></div>
+        <div class="field"><textarea placeholder="Instructions for the student" oninput="examQuestions[${i}].instructions=this.value">${q.instructions}</textarea></div>
+        <div class="field" style="max-width:120px;"><label>Points</label><input type="number" value="${q.points}" oninput="examQuestions[${i}].points=Number(this.value)"></div>
+      </div>`;
+    }
+  }).join('') || '<div class="small">No questions added yet.</div>';
+}
+function removeQuestion(i){ examQuestions.splice(i,1); renderQuestionBuilder(); }
+
+async function createExam(e){
+  e.preventDefault();
+  if (!examQuestions.length){ showMsg('examCreateMsg', 'Add at least one question.'); return false; }
+  try {
+    await api('/exams', {
+      method:'POST',
+      body: JSON.stringify({
+        title: document.getElementById('examTitle').value,
+        description: document.getElementById('examDesc').value,
+        level: document.getElementById('examLevel').value,
+        instrument: document.getElementById('examInstrument').value,
+        durationMinutes: Number(document.getElementById('examDuration').value),
+        questions: examQuestions
+      })
+    });
+    showMsg('examCreateMsg', 'Exam published.', true);
+    examQuestions = []; renderQuestionBuilder(); e.target.reset();
+    loadExams();
+  } catch(err){ showMsg('examCreateMsg', err.message); }
+  return false;
+}
+
+/* ---------- exams: list + take (student) ---------- */
+async function loadExams(){
+  const list = document.getElementById('examsList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const exams = await api('/exams');
+    if (!exams.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">No exams yet</div>Check back once your instructor publishes one.</div>'; return; }
+
+    let mySubs = [];
+    if (currentUser.role === 'student'){
+      mySubs = await api('/exams/my-grades');
+    }
+
+    list.innerHTML = exams.map(ex => {
+      const taken = mySubs.find(s => s.examId && s.examId._id === ex._id);
+      return `
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <h3>${ex.title}</h3>
+            <span class="badge level">${ex.level}</span><span class="badge instrument">${ex.instrument}</span>
+            <div class="meta">${ex.description || ''}</div>
+            <div class="meta">${ex.questions.length} question(s) · ${ex.durationMinutes} min</div>
+          </div>
+          ${currentUser.role==='student'
+            ? (taken
+                ? `<span class="badge status-graded">${taken.status === 'graded' ? taken.percentage + '%' : 'Awaiting grading'}</span>`
+                : `<button class="btn-brass" onclick="openExam('${ex._id}')">Take exam</button>`)
+            : ''}
+        </div>
+        <div id="examTake-${ex._id}"></div>
+      </div>`;
+    }).join('');
+  } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+
+let openExamData = null;
+async function openExam(examId){
+  const exams = await api('/exams');
+  openExamData = exams.find(e => e._id === examId);
+  const box = document.getElementById('examTake-' + examId);
+  box.innerHTML = `
+    <form onsubmit="return submitExam(event, '${examId}')" style="margin-top:14px; border-top:1px solid rgba(33,26,21,0.1); padding-top:14px;">
+      ${openExamData.questions.map((q, i) => `
+        <div class="qbuilder-item">
+          <div class="small">Q${i+1} · ${q.points} pt(s)</div>
+          <div style="font-weight:600; margin:4px 0 8px;">${q.question}</div>
+          ${q.type==='mcq'
+            ? q.options.map((opt, oi) => `
+                <div class="opt-row">
+                  <input type="radio" name="q_${q._id}" value="${oi}">
+                  <label>${opt}</label>
+                </div>`).join('')
+            : `<div class="small" style="margin-bottom:6px;">${q.instructions || ''}</div><input type="file" name="file_${q._id}">`
+          }
+        </div>
+      `).join('')}
+      <button class="btn-brass" type="submit">Submit exam</button>
+      <div id="examSubmitMsg-${examId}"></div>
+    </form>
+  `;
+}
+async function submitExam(e, examId){
+  e.preventDefault();
+  const form = e.target;
+  const answers = [];
+  const fd = new FormData();
+  openExamData.questions.forEach(q => {
+    if (q.type === 'mcq'){
+      const checked = form.querySelector(`input[name="q_${q._id}"]:checked`);
+      answers.push({ questionId: q._id, selectedIndex: checked ? Number(checked.value) : null });
+    } else {
+      const fileInput = form.querySelector(`input[name="file_${q._id}"]`);
+      if (fileInput && fileInput.files[0]) fd.append(q._id, fileInput.files[0]);
+    }
+  });
+  fd.append('answers', JSON.stringify(answers));
+  try {
+    await api('/exams/' + examId + '/submit', { method:'POST', body: fd });
+    showMsg('examSubmitMsg-'+examId, 'Submitted! Check My Grades for your result.', true);
+    setTimeout(loadExams, 1200);
+  } catch(err){ showMsg('examSubmitMsg-'+examId, err.message); }
+  return false;
+}
+
+/* ---------- grades (student) ---------- */
+async function loadGrades(){
+  const list = document.getElementById('gradesList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const subs = await api('/exams/my-grades');
+    if (!subs.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">No exams taken yet</div>Your results will appear here once you sit an exam.</div>'; return; }
+    list.innerHTML = subs.map(s => `
+      <div class="card card-row">
+        <div>
+          <h3>${s.examId ? s.examId.title : '(exam removed)'}</h3>
+          <span class="badge level">${s.examId ? s.examId.level : ''}</span><span class="badge instrument">${s.examId ? s.examId.instrument : ''}</span>
+          <div class="meta">Submitted ${new Date(s.submittedAt).toLocaleDateString()}</div>
+        </div>
+        <div style="text-align:right;">
+          ${s.status === 'graded'
+            ? `<div class="score-big">${s.percentage}%</div><div class="small">${s.scoredPoints}/${s.totalPoints} pts</div>`
+            : `<div class="score-big pending badge status-pending">Awaiting grading</div>`}
+        </div>
+      </div>
+    `).join('');
+  } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+
+/* ---------- approvals (manager) ---------- */
+async function loadApprovals(){
+  const list = document.getElementById('approvalsList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const pending = await api('/auth/pending');
+    if (!pending.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">All caught up</div>No accounts waiting for approval.</div>'; return; }
+    list.innerHTML = pending.map(u => `
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <h3>${u.name} <span class="small">(${u.role})</span></h3>
+            <div class="meta">${u.email} · ${u.phone}</div>
+          </div>
+          <button class="btn-danger" onclick="rejectUser('${u._id}')">Reject</button>
+        </div>
+        ${u.role === 'student' ? `
+          <div class="row2" style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; margin-top:12px; align-items:end;">
+            <div class="field" style="margin:0;"><label>Level</label>
+              <select id="lvl-${u._id}"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+            </div>
+            <div class="field" style="margin:0;"><label>Instrument</label>
+              <select id="inst-${u._id}">
+                <option>Piano</option><option>Guitar</option><option>Violin</option><option>Voice</option>
+                <option>Drums</option><option>Saxophone</option><option>Flute</option><option>Music Theory</option><option>Other</option>
+              </select>
+            </div>
+            <button class="btn-brass" onclick="approveUser('${u._id}')">Approve</button>
+          </div>
+        ` : `<div style="margin-top:12px;"><button class="btn-brass" onclick="approveUser('${u._id}')">Approve as manager</button></div>`}
+      </div>
+    `).join('');
+  } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+async function approveUser(userId){
+  const body = {};
+  const lvlEl = document.getElementById('lvl-'+userId);
+  const instEl = document.getElementById('inst-'+userId);
+  if (lvlEl) body.level = lvlEl.value;
+  if (instEl) body.instrument = instEl.value;
+  try { await api('/auth/approve/'+userId, { method:'POST', body: JSON.stringify(body) }); loadApprovals(); }
+  catch(err){ alert(err.message); }
+}
+async function rejectUser(userId){
+  if (!confirm('Reject this account request?')) return;
+  await api('/auth/reject/'+userId, { method:'POST' });
+  loadApprovals();
+}
+
+/* ---------- grading queue (manager) ---------- */
+async function loadGrading(){
+  const list = document.getElementById('gradingList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const subs = await api('/exams/submissions/pending');
+    if (!subs.length){ list.innerHTML = '<div class="empty"><div class="eyebrow">Nothing to grade</div>All file-based answers have been scored.</div>'; return; }
+    list.innerHTML = subs.map(s => `
+      <div class="card">
+        <h3>${s.examId.title}</h3>
+        <div class="meta">${s.studentId.name} · ${s.studentId.email}</div>
+        <div class="staff-divider"></div>
+        ${s.answers.filter(a => a.type==='file').map(a => `
+          <div style="margin-bottom:10px;">
+            <div class="small" style="margin-bottom:4px;">${a.fileName ? `<a href="#" onclick="downloadSubFile('${s._id}','${a.questionId}'); return false;">${a.fileName}</a>` : 'No file submitted'}</div>
+            <input type="number" placeholder="Score" style="width:90px; padding:6px 8px; border:1px solid rgba(33,26,21,0.22); border-radius:3px;" id="score-${s._id}-${a.questionId}">
+            <input type="text" placeholder="Feedback (optional)" style="width:220px; padding:6px 8px; border:1px solid rgba(33,26,21,0.22); border-radius:3px;" id="fb-${s._id}-${a.questionId}">
+          </div>
+        `).join('')}
+        <button class="btn-brass" onclick="submitGrade('${s._id}', ${JSON.stringify(s.answers.filter(a=>a.type==='file').map(a=>a.questionId)).replace(/"/g,'&quot;')})">Save grade</button>
+        <div id="gradeMsg-${s._id}"></div>
+      </div>
+    `).join('');
+  } catch(err){ list.innerHTML = `<div class="msg err">${err.message}</div>`; }
+}
+async function downloadSubFile(subId, questionId){
+  const res = await fetch(`${API_BASE}/exams/submissions/${subId}/file/${questionId}`, { headers: { 'Authorization': 'Bearer ' + authToken } });
+  if (!res.ok){ alert('Could not download file'); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+async function submitGrade(subId, questionIds){
+  const scores = {}, feedback = {};
+  questionIds.forEach(qid => {
+    const s = document.getElementById(`score-${subId}-${qid}`);
+    const f = document.getElementById(`fb-${subId}-${qid}`);
+    if (s && s.value !== '') scores[qid] = Number(s.value);
+    if (f && f.value) feedback[qid] = f.value;
+  });
+  try {
+    await api(`/exams/submissions/${subId}/grade`, { method:'POST', body: JSON.stringify({ scores, feedback }) });
+    showMsg('gradeMsg-'+subId, 'Grade saved — student notified by SMS.', true);
+    setTimeout(loadGrading, 1000);
+  } catch(err){ showMsg('gradeMsg-'+subId, err.message); }
+}
+
+/* ---------- boot ---------- */
+tryResumeSession();
+</script>
+</body>
+</html>
